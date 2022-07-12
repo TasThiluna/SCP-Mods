@@ -60,6 +60,12 @@ public class SCP079 : MonoBehaviour {
    string NotTheKeys = "0123456789<>>";
 
    void Start () {
+
+      if (Rnd.Range(0, 100) == 0) {
+         TV.GetComponent<MeshRenderer>().material = TVMats[3];
+         Audio.PlaySoundAtTransform("TINGUS PINGUS", transform);
+      }
+
       //LastSolvedSeed = 10;
       HumAS.clip = HumAC;
       if (LastSolvedSeed == -1) {
