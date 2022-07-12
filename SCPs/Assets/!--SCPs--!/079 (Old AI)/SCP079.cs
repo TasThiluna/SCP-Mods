@@ -20,11 +20,13 @@ public class SCP079 : MonoBehaviour {
    public KMSelectable Mod;
 
    public Material[] TVMats;
+   public Material[] Faces;
    public GameObject TV;
 
    Coroutine Cycle;
    Coroutine Memory;
    Coroutine Sound = null;
+   Coroutine FaceOff;
 
    string UserInput = "";
 
@@ -125,7 +127,9 @@ public class SCP079 : MonoBehaviour {
          if (!HumAS.isPlaying) {
             HumAS.Play();
          }
-         TV.GetComponent<MeshRenderer>().material = TVMats[1];
+         if (FaceOff == null) {
+            FaceOff = StartCoroutine(FunnyFaceChange());
+         }
 
          for (int i = 0; i < TheKeys.Count(); i++) {
             if (Input.GetKeyDown(TheKeys[i])) {
@@ -136,6 +140,7 @@ public class SCP079 : MonoBehaviour {
       }
       else {
          Code.gameObject.SetActive(false);
+         StopCoroutine(FaceOff);
          HumAS.Stop();
          TV.GetComponent<MeshRenderer>().material = TVMats[0];
       }
@@ -202,6 +207,19 @@ public class SCP079 : MonoBehaviour {
       Cooldown = false;
       TV.GetComponent<MeshRenderer>().material = TVMats[Focused ? 1 : 0];
       Cycle = StartCoroutine(CycleNums());
+   }
+
+   IEnumerator FunnyFaceChange () {
+      int index = 0;
+      int old = 0;
+      while (true) {
+         do {
+            index = Rnd.Range(0, Faces.Length);
+         } while (index == old);
+         old = index;
+         TV.GetComponent<MeshRenderer>().material = Faces[index];
+         yield return null;
+      }
    }
 
 #pragma warning disable 414
