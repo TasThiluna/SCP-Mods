@@ -434,7 +434,7 @@ MeshRenderer:
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
   m_Materials:
-  - {fileID: 2100000, guid: 742003b31e17efc4b9780304b5685aac, type: 2}
+  - {fileID: 2100000, guid: 43039a59c160dfa4fa0d35265ae070e3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -764,7 +764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShaderNames:
-  - Standard
+  - KT/Mobile/DiffuseTint
 --- !u!114 &114435186568752602
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -786,6 +786,7 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 43039a59c160dfa4fa0d35265ae070e3, type: 2}
   - {fileID: 2100000, guid: dfa2f44ad399f764dbc045164cbf7d31, type: 2}
   - {fileID: 2100000, guid: afd436f25bac080428c50bdb89616491, type: 2}
+  - {fileID: 2100000, guid: eea879f178f5569449a93429104cdb3c, type: 2}
   Faces:
   - {fileID: 2100000, guid: f2e02d788087ea740aa092da919cad2a, type: 2}
   - {fileID: 2100000, guid: 8ef2eaa6b4e94c64787735aebef7c2cc, type: 2}

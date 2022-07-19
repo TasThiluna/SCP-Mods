@@ -61,12 +61,12 @@ public class SCP079 : MonoBehaviour {
 
    void Start () {
 
-      if (Rnd.Range(0, 100) == 0) {
+      if (Rnd.Range(0, 100) == 0) { //Funny tingus pingus easter egg
          TV.GetComponent<MeshRenderer>().material = TVMats[3];
          Audio.PlaySoundAtTransform("TINGUS PINGUS", transform);
       }
 
-      //LastSolvedSeed = 10;
+      //If the last seed exists, converts it to a 2d array and chooses the current seed by taking one of random similarity
       HumAS.clip = HumAC;
       if (LastSolvedSeed == -1) {
          Seed = Rnd.Range(1, 26);
@@ -104,14 +104,14 @@ public class SCP079 : MonoBehaviour {
    IEnumerator CycleNums () {
       while (true) {
          SetNumber();
-         if (Focused) {
+         if (Focused) { //Only show number if the tv is on
             Debug.LogFormat("[Old AI #{0}] The AI displays {1}.", ModuleId, Code.text);
          }
          yield return new WaitForSeconds(3f);
       }
    }
 
-   void SetNumber () {
+   void SetNumber () { //Sets the number to be 5-7 digits
       int NumberGenerated = NumGen.GenerateNumber(Seed);
       if (NumberGenerated < 10000) {
          Code.text = NumberGenerated.ToString("00000");
@@ -125,6 +125,13 @@ public class SCP079 : MonoBehaviour {
    }
 
    void Update () {
+      if (!Application.isEditor) { //Matches the hum to the game volume, has to be audio source since it stops midway
+         HumAS.volume = GameMusicControl.GameSFXVolume;
+      }
+      else {
+         HumAS.volume = 0;
+      }
+      
       if (Cooldown || ModuleSolved) {
          return;
       }
@@ -146,13 +153,14 @@ public class SCP079 : MonoBehaviour {
       }
       else {
          Code.gameObject.SetActive(false);
-         StopCoroutine(FaceOff);
+         StopCoroutine(FaceOff); //I forgot if this makes it null or not
+         FaceOff = null;
          HumAS.Stop();
          TV.GetComponent<MeshRenderer>().material = TVMats[0];
       }
    }
 
-   void HandleKey (char In) {
+   void HandleKey (char In) { //Boring keyboard shit
       if (Cycle != null) {
          StopCoroutine(Cycle);
       }
@@ -180,7 +188,7 @@ public class SCP079 : MonoBehaviour {
          Strike();
          return;
       }
-      if ((SeedtoSubmit == 18 && UserInput[0] == '0') || (SeedtoSubmit == 8 && UserInput == "8") || (UserInput.Length >= 5 && UserInput.Length <= 7 && CheckSolution.IsCorrect(SeedtoSubmit, int.Parse(Code.text)))) {
+      if ((SeedtoSubmit == 18 && UserInput[0] == '0') || (SeedtoSubmit == 8 && UserInput == "8") || (UserInput.Length >= 5 && UserInput.Length <= 7 && CheckSolution.IsCorrect(SeedtoSubmit, int.Parse(Code.text)))) { //Special rules
          Solve();
       }
       else {
@@ -206,7 +214,8 @@ public class SCP079 : MonoBehaviour {
       Memory = StartCoroutine(CooldownTimer());
    }
 
-   IEnumerator CooldownTimer () {
+   IEnumerator CooldownTimer () { //Strike and reset, cooldown of 24 hours according to article
+      StopCoroutine(FaceOff);
       TV.GetComponent<MeshRenderer>().material = TVMats[2];
       Cooldown = true;
       yield return new WaitForSeconds(24f);
@@ -215,7 +224,7 @@ public class SCP079 : MonoBehaviour {
       Cycle = StartCoroutine(CycleNums());
    }
 
-   IEnumerator FunnyFaceChange () {
+   IEnumerator FunnyFaceChange () { //Makes sure the new face isn't the same as the last
       int index = 0;
       int old = 0;
       while (true) {
