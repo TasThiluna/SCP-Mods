@@ -198,7 +198,9 @@ public class SCP079 : MonoBehaviour {
 
    void Solve () {
       GetComponent<KMBombModule>().HandlePass();
+      StopCoroutine(FaceOff);
       LastSolvedSeed = Seed;
+      Code.text = "";
       Audio.PlaySoundAtTransform("Off", transform);
       ModuleSolved = true;
       HumAS.Stop();

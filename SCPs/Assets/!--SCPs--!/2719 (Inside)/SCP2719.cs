@@ -12,8 +12,10 @@ public class SCP2719 : MonoBehaviour {
    public KMBombInfo Bomb;
    public KMAudio Audio;
 
-   public TextMesh InputText;
-   public TextMesh InsideResultText;
+   public TextMesh[] InputText;
+   public TextMesh[] InsideResultText;
+
+   int InputIndex;
 
    public KMSelectable Mod;
 
@@ -33,7 +35,7 @@ public class SCP2719 : MonoBehaviour {
    List<int> Indices = new List<int> { };
 
    string[] LetterGroups = { "ABCDE", "FGHIJ", "KLMNO", "PQRST", "UVWXYZ" };
-   string[] SafeGuesses = { "Neutralized", "Euclid", "Redacted", "Keter", "Safe", "Jack", "Bright", "Alto", "Clef", "Charles", "Gears", "Everette", "King", "Quantum", "Unknown", "Expunged", "████████████", "Abstract", "Metaphysical", "Zermelo" };
+   string[] SafeGuesses = { "Neutralized", "Euclid", "Redacted", "Keter", "Safe", "Jack", "Bright", "Alto", "Clef", "Charles", "Gears", "Everette", "King", "Quantum", "Unknown", "Apollyon", "████████████", "Expunged", "Metaphysical", "Zermelo" };
 
    List<List<char>> AllSets = new List<List<char>> { };
 
@@ -70,7 +72,10 @@ public class SCP2719 : MonoBehaviour {
       for (int i = 0; i < SafeGuesses.Length; i++) {
          SafeGuesses[i] = SafeGuesses[i].ToUpperInvariant();
       }
-      InputText.text = UserInput;
+      for (int i = 0; i < 17; i++) {
+         InputText[i].text = "";
+         InsideResultText[i].text = "";
+      }
    }
 
    void GetLetters () {
@@ -147,44 +152,68 @@ public class SCP2719 : MonoBehaviour {
          }
       }
       else {
-         UserInput += Input.ToString();
+         if (UserInput.Length == 0 || (UserInput.Length != 0 && UserInput.Last() == ' ')) {
+            UserInput += Input.ToString();
+         }
+         else {
+            UserInput += Input.ToString().ToLowerInvariant();
+         }
       }
-      InputText.text = UserInput;
+      InputText[InputIndex].text = UserInput;
+   }
+
+   void Strike () {
+      StartCoroutine(UpdateInsideOutsideText("Outside"));
+      WillStrike = false;
+      UserInput = "";
+      InputedBecome = null;
+      GetComponent<KMBombModule>().HandleStrike();
+   }
+
+   void Solve () {
+      GetComponent<KMBombModule>().HandlePass();
+      StartCoroutine(UpdateInsideOutsideText("Went Inside"));
+      ModuleSolved = true;
    }
 
    void HandleEnter () {
 
-      //bool Recognized = false;
+      if (UserInput == "") {
+         return;
+      }
+
+      UserInput = UserInput.ToUpper();
+
+      InputIndex++;
+      bool Recognized = false;
 
       if (BecomeInsides.Contains(UserInput)) {
+         StartCoroutine(UpdateInsideOutsideText("Became Inside"));
          InputedBecome = UserInput;
-         for (int i = 0; i < 5; i++) {
-            if (LetterGroups[i].Contains(CurLet)) {
-               if (InputedBecome != BecomeInsides[i]) {
-                  WillStrike = true;
-               }
-            }
+         if (InputedBecome != BecomeInsides[GetIndexOfSubmissionBullshit()]) {
+            WillStrike = true;
          }
+         UserInput = "";
          return;
       }
 
       if (InputedBecome != null) {
          if (!WillStrike && UserInput == IsInsides[Array.IndexOf(BecomeInsides, InputedBecome)]) {
-            GetComponent<KMBombModule>().HandlePass();
-            ModuleSolved = true;
+            Solve();
          }
          else {
-            GetComponent<KMBombModule>().HandleStrike();
+            Strike();
          }
+         UserInput = "";
          return;
       }
 
       if (SafeGuesses.Contains(UserInput)) {
-         //Recognized = true;
+         Recognized = true;
          if (UserInput.Contains(CurLet)) {
-            if (Rnd.Range(0, 5) == 0) {
+            if (Rnd.Range(0, 3) == 0) {
                StartCoroutine(UpdateInsideOutsideText("Became Inside"));
-               Inside = Bomb.GetModuleNames().PickRandom().ToUpperInvariant();
+               Inside = UserInput;
                Inside = Regex.Replace(Inside, "[^a-zA-Z0-9\\s]", String.Empty);
                UpdateCurrentLetter();
             }
@@ -204,7 +233,7 @@ public class SCP2719 : MonoBehaviour {
          Mod = Regex.Replace(Mod, "[^a-zA-Z0-9\\s]", String.Empty);
          Mod = Mod.ToUpperInvariant();
          if (Mod == UserInput) {
-            //Recognized = true;
+            Recognized = true;
             if (UserInput.Contains(CurLet)) {
                if (Rnd.Range(0, 10) == 0) {
                   StartCoroutine(UpdateInsideOutsideText("Became Inside"));
@@ -220,16 +249,41 @@ public class SCP2719 : MonoBehaviour {
             }
          }
       }
+
+      if (!Recognized) {
+         StartCoroutine(UpdateInsideOutsideText("Unrecognized"));
+      }
       UserInput = "";
    }
 
    IEnumerator UpdateInsideOutsideText (string input) {
       AnimateText = true;
-      InsideResultText.text = "";
+      switch (input) {
+         case "Became Inside":
+            Debug.LogFormat("[Inside #{0}] The input \"{1}\" became inside.", ModuleId, UserInput);
+            break;
+         case "Went Inside":
+            Debug.LogFormat("[Inside #{0}] The input \"{1}\" went inside.", ModuleId, UserInput);
+            break;
+         case "Outside":
+            Debug.LogFormat("[Inside #{0}] The input \"{1}\" is outside.", ModuleId, UserInput);
+            break;
+         case "Unrecognized":
+            Debug.LogFormat("[Inside #{0}] The input \"{1}\" is unrecognized.", ModuleId, UserInput);
+            break;
+      }
+      InsideResultText[InputIndex - 1].text = "";
       for (int i = 0; i < input.Length; i++) {
-         InsideResultText.text += input[i].ToString();
+         InsideResultText[InputIndex - 1].text += input[i].ToString();
          if (input[i] != ' ') {
             yield return new WaitForSeconds(.01f);
+         }
+      }
+      InputIndex %= 17;
+      if (InputIndex == 0) {
+         for (int i = 0; i < 17; i++) {
+            InputText[i].text = "";
+            InsideResultText[i].text = "";
          }
       }
       AnimateText = false;
@@ -254,18 +308,44 @@ public class SCP2719 : MonoBehaviour {
             CurLet = OldCur;
          }
       }
-      Debug.Log(CurLet);
+      Debug.LogFormat("[Inside #{0}] \"{1}\" became inside.", ModuleId, CurLet);
+      Debug.LogFormat("[Inside #{0}] {1} should become inside, and {2} should go inside.", ModuleId, BecomeInsides[GetIndexOfSubmissionBullshit()], IsInsides[GetIndexOfSubmissionBullshit()]);
+   }
+
+   int GetIndexOfSubmissionBullshit () {
+      for (int i = 0; i < 5; i++) {
+         if (LetterGroups[i].Contains(CurLet)) {
+            return i;
+         }
+      }
+      return 8008135;
    }
 
 #pragma warning disable 414
-   private readonly string TwitchHelpMessage = @"Use !{0} to do something.";
+   private readonly string TwitchHelpMessage = @"Use !{0} XXXX to submit that word.";
 #pragma warning restore 414
 
    IEnumerator ProcessTwitchCommand (string Command) {
       yield return null;
+      Command = Command.ToUpper().Trim();
+      if (!Regex.IsMatch(Command, "[^a-zA-Z0-9\\s]")) {
+         for (int i = 0; i < Command.Length; i++) {
+            HandleKey(Command[i]);
+            yield return new WaitForSeconds(.1f);
+         }
+         HandleEnter();
+      }
+      else {
+         yield return "sendtochaterror I don't understand!";
+      }
    }
 
    IEnumerator TwitchHandleForcedSolve () {
-      yield return null;
+      int weed = GetIndexOfSubmissionBullshit();
+      
+      if (InputedBecome == null) {
+         yield return ProcessTwitchCommand(BecomeInsides[weed]);
+      }
+      yield return ProcessTwitchCommand(IsInsides[weed]);
    }
 }
